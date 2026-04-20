@@ -235,7 +235,7 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
                 />
               </div>
             </div>
-
+  
             {/* WARNING PANEL - Drops below reactor when distraction detected */}
             <AnimatePresence>
               {isWarningMode && (
