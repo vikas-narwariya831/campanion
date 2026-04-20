@@ -25,7 +25,6 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
   const [glitchText, setGlitchText] = useState('SYSTEM SECURE')
   const [showMenu, setShowMenu] = useState(false)
   
-  // Setup state
   const [onboardingData, setOnboardingData] = useState<any>(null)
   const [runningApps, setRunningApps] = useState<string[]>([
     'Code', 'Chrome', 'Terminal', 'Discord', 'Slack', 'Figma'
@@ -34,7 +33,6 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
   const [setupTime, setSetupTime] = useState(60)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
-  // Periodic system pulse
   useEffect(() => {
     const interval = setInterval(() => {
       setPulse(true)
@@ -43,7 +41,6 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
     return () => clearInterval(interval)
   }, [])
 
-  // Activity data tracking
   useEffect(() => {
     const cleanup = window.api?.onActivityUpdate((data: any) => {
         setOnboardingData(prev => ({
@@ -59,15 +56,10 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
     return () => cleanup && cleanup()
   }, [])
 
-  // Jarvis Voice Logic
   useEffect(() => {
     if ((session?.warning || 0) > 0 && session?.isActive) {
       const speak = () => {
-        const phrases = [
-          'Sir, return to focus immediately.',
-          'Distraction detected. Resuming goal is mandatory.',
-          'Penalty imminent. Sir, please stop.'
-        ]
+        const phrases = ['Sir, return to focus.', 'Distraction detected.', 'Penalty imminent.']
         const phrase = phrases[Math.floor(Math.random() * phrases.length)]
         const speech = new SpeechSynthesisUtterance(phrase)
         const voices = window.speechSynthesis.getVoices()
@@ -76,11 +68,10 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
         speech.rate = 1.3
         window.speechSynthesis.speak(speech)
       }
-      setTimeout(speak, 500)
+      setTimeout(speak, 300)
     }
   }, [session?.warning, session?.isActive])
 
-  // Alert Text Logic
   useEffect(() => {
     if ((session?.warning || 0) > 0) {
       const texts = ['ACCESS DENIED', 'SYSTEM LOCKDOWN', 'ALERT']
@@ -112,11 +103,9 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
   const startSession = (min: number) => {
     if (window.api?.startSession) window.api.startSession(min)
   }
-
   const stopSession = () => {
     if (window.api?.stopSession) window.api.stopSession()
   }
-
   const toggleDashboard = () => {
     if (window.api?.toggleDashboard) window.api.toggleDashboard()
   }
@@ -127,19 +116,14 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
       const jarvisVoice = voices.find(v => v.name.includes('Google UK English Male')) || voices.find(v => v.lang.includes('en'))
       if (jarvisVoice) speech.voice = jarvisVoice
       window.speechSynthesis.speak(speech)
-
       if (window.api?.updatePetConfig) {
-          window.api.updatePetConfig({
-              ...onboardingData,
-              onboardingCompleted: true,
-              targetApp: setupApp
-          })
+          window.api.updatePetConfig({ ...onboardingData, onboardingCompleted: true, targetApp: setupApp })
           startSession(setupTime)
       }
   }
 
-  const coreColor = isWarningMode ? '#ff0000' : (state === 'idle' ? '#0ea5e9' : '#06b6d4')
-  const outerColor = isWarningMode ? '#ff3333' : (state === 'idle' ? '#38bdf8' : '#22d3ee')
+  const coreColor = isWarningMode ? '#ff0000' : '#06b6d4'
+  const outerColor = isWarningMode ? '#ff3333' : '#22d3ee'
   const sessionProgress = (session?.isActive && session.total > 0) ? (session.remaining / session.total) : 0
 
   const formatTime = (seconds: number) => {
@@ -150,23 +134,19 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
 
   return (
     <div
-      className="w-full h-full flex flex-col items-center justify-start pointer-events-auto select-none relative overflow-visible"
+      className="w-full h-full flex flex-col items-center justify-center pointer-events-auto select-none"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Notch Plate Visual */}
-      <div className="w-24 h-4 bg-black/80 rounded-b-2xl mb-1 shadow-lg flex items-center justify-center border-x border-b border-white/5 backdrop-blur-sm z-[100]">
-          <div className="w-6 h-0.5 bg-white/10 rounded-full"></div>
-      </div>
-
       <AnimatePresence mode='wait'>
         {isSetupActive ? (
+          /* ==================== SETUP SCREEN ==================== */
           <motion.div 
             key="setup-screen"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="w-[220px] bg-slate-950/95 border border-cyan-500/30 rounded-[1.2rem] p-3 shadow-2xl backdrop-blur-xl flex flex-col items-center mt-2 z-[9999]"
+            className="w-[220px] bg-slate-950/95 border border-cyan-500/30 rounded-[1.2rem] p-3 shadow-2xl backdrop-blur-xl flex flex-col items-center z-[9999]"
           >
             <div className="w-full space-y-2">
                 <div className="space-y-1 relative">
@@ -191,7 +171,6 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
                         </div>
                     )}
                 </div>
-
                 <div className="space-y-1">
                     <label className="text-[7px] text-slate-500 font-bold uppercase tracking-widest ml-1">Duration</label>
                     <div className="grid grid-cols-3 gap-1 bg-slate-900 border border-slate-800 p-0.5 rounded-lg">
@@ -203,89 +182,132 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
                     </div>
                 </div>
             </div>
-
             <button onClick={initializeJarvis} className="w-full mt-4 bg-cyan-500 p-2 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
                 Start Session
             </button>
           </motion.div>
-        ) : (
+        ) : isWarningMode ? (
+          /* ==================== WARNING MODE (Compact, No Background Bleed) ==================== */
           <motion.div 
-            key="jarvis-core"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: isWarningMode ? 1.5 : 1 }}
-            className={`flex flex-col items-center justify-start pt-16 h-[500px] w-full relative transition-colors duration-500 ${isWarningMode ? 'bg-red-950/20' : ''}`}
+            key="warning-mode"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            className="flex flex-col items-center"
           >
-            
-            {/* DISTRACTION COUNTDOWN - Centered within Core */}
-            <AnimatePresence>
-                {isWarningMode && (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-[500] flex flex-col items-center justify-center pointer-events-none"
-                    >
-                        <motion.span 
-                            key={session?.warning}
-                            initial={{ scale: 3, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="text-[180px] font-black text-red-500 leading-none drop-shadow-[0_0_30px_#ff0000] -mt-20"
-                        >
-                            {Math.ceil(session?.warning || 0)}
-                        </motion.span>
-                        
-                        <div className="flex flex-col items-center -mt-8">
-                            <span className="text-red-500 font-mono text-[14px] font-black drop-shadow-[0_0_10px_red] uppercase italic animate-pulse">
-                                {glitchText}
-                            </span>
-                            <div className="text-[10px] text-white/50 bg-red-600/40 px-6 py-1 rounded-full border border-red-500/50 uppercase tracking-[0.3em] font-black mt-2">
-                                System Lockdown Imminent
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Core Assembly */}
-            <div className={`relative flex items-center justify-center`}>
+            {/* Compact Warning Card */}
+            <div className="relative flex flex-col items-center">
+              {/* Big Red Number */}
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ repeat: Infinity, duration: 0.5 }}
+                className="relative flex items-center justify-center"
+              >
+                {/* Red Glow Behind Number */}
+                <div className="absolute w-48 h-48 bg-red-600/30 rounded-full blur-[40px]" />
                 
-                {/* TIMER READOUT - Tight mount right */}
-                {session?.isActive && !isWarningMode && (
-                    <motion.div 
-                        className="absolute -right-20 flex flex-col items-center bg-slate-950/80 backdrop-blur-md p-2 px-3 border-l-4 border-cyan-500 rounded-r-xl shadow-xl"
-                    >
-                        <span className="text-[7px] text-slate-500 font-black uppercase tracking-widest leading-none">Time</span>
-                        <span className="text-[16px] font-black font-mono text-white mt-1 leading-none">
-                            {formatTime(session.remaining)}
-                        </span>
+                {/* Red Ring */}
+                <svg className="absolute w-48 h-48 -rotate-90">
+                  <circle cx="96" cy="96" r="88" fill="transparent" stroke="#ff000020" strokeWidth="3" />
+                  <motion.circle 
+                    cx="96" cy="96" r="88" fill="transparent" 
+                    stroke="#ff0000" strokeWidth="4"
+                    strokeDasharray={2 * Math.PI * 88}
+                    animate={{ strokeDashoffset: (2 * Math.PI * 88) * (1 - ((session?.warning || 0) / 5)) }}
+                    strokeLinecap="round"
+                  />
+                </svg>
+
+                {/* Core Red Dot */}
+                <motion.div 
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ repeat: Infinity, duration: 0.4 }}
+                  className="absolute w-8 h-8 bg-red-500 rounded-full blur-md"
+                />
+                <div className="w-5 h-5 bg-red-500 rounded-full border border-white/20 shadow-[0_0_20px_#ff0000] absolute" />
+
+                {/* Countdown Number */}
+                <motion.span 
+                  key={session?.warning}
+                  initial={{ scale: 2, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="text-[100px] font-black text-white leading-none drop-shadow-[0_0_30px_rgba(255,0,0,0.8)] relative z-10"
+                >
+                  {Math.ceil(session?.warning || 0)}
+                </motion.span>
+              </motion.div>
+
+              {/* Warning Text Below */}
+              <motion.div 
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ repeat: Infinity, duration: 0.3 }}
+                className="mt-4 bg-red-600 px-6 py-1.5 rounded-full shadow-[0_0_20px_rgba(255,0,0,0.5)]"
+              >
+                <span className="text-[10px] font-black text-white tracking-[0.5em] uppercase">
+                  {glitchText}
+                </span>
+              </motion.div>
+
+              <span className="text-[9px] text-red-400/60 font-bold mt-3 uppercase tracking-wider">
+                Return to {session?.target || 'Focus App'} now
+              </span>
+            </div>
+          </motion.div>
+        ) : (
+          /* ==================== NORMAL FOCUS MODE ==================== */
+          <motion.div 
+            key="focus-mode"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            className="flex flex-col items-center"
+          >
+            {/* Notch */}
+            <div className="w-24 h-4 bg-black/80 rounded-b-2xl mb-2 shadow-lg flex items-center justify-center border-x border-b border-white/5">
+              <div className="w-6 h-0.5 bg-white/10 rounded-full"></div>
+            </div>
+
+            {/* Reactor + Timer Assembly */}
+            <div className="relative flex items-center justify-center">
+              {/* Timer Badge Right */}
+              {session?.isActive && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -5 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="absolute -right-[72px] bg-slate-950/90 backdrop-blur-md p-2 px-3 border-l-4 border-cyan-500 rounded-r-xl shadow-xl"
+                >
+                  <span className="text-[6px] text-slate-500 font-black uppercase tracking-widest block leading-none">Time</span>
+                  <span className="text-[15px] font-black font-mono text-white leading-none mt-1 block">
+                    {formatTime(session.remaining)}
+                  </span>
+                </motion.div>
+              )}
+
+              {/* Reactor Core */}
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                {/* Quick Menu */}
+                <AnimatePresence>
+                  {showMenu && (
+                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className="absolute -top-8 flex items-center space-x-1 bg-slate-950/90 border border-slate-700 p-1 rounded-xl z-[999]">
+                      <button onClick={stopSession} className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-md"><Square size={10} fill="currentColor" /></button>
+                      <button onClick={toggleDashboard} className="p-1 text-slate-400 hover:text-white"><LayoutDashboard size={10} /></button>
                     </motion.div>
-                )}
+                  )}
+                </AnimatePresence>
 
-                {/* Main Reactor Body */}
-                <div className="relative w-28 h-28 flex items-center justify-center p-4">
-                    {/* Quick Menu Overlay */}
-                    <AnimatePresence>
-                        {showMenu && !isWarningMode && (
-                            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className="absolute -top-10 flex items-center space-x-1 bg-slate-950/90 border border-slate-700 p-1.5 rounded-xl z-[999]">
-                                <button onClick={stopSession} className="p-1 px-1 text-rose-400 hover:bg-rose-500/10 rounded-md"><Square size={12} fill="currentColor" /></button>
-                                <button onClick={toggleDashboard} className="p-1 text-slate-400 hover:text-white"><LayoutDashboard size={12} /></button>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                    
-                    {/* Reactor Circles */}
-                    <svg className="absolute w-24 h-24 -rotate-90">
-                        <circle cx="48" cy="48" r="42" fill="transparent" stroke="rgba(34, 211, 238, 0.05)" strokeWidth="1" />
-                        <motion.circle cx="48" cy="48" r="42" fill="transparent" stroke={outerColor} strokeWidth={isWarningMode ? 3 : 1.5} strokeDasharray={2 * Math.PI * 42} animate={{ strokeDashoffset: (2 * Math.PI * 42) * (1 - sessionProgress) }} strokeLinecap="round" />
-                    </svg>
+                {/* Circle Progress */}
+                <svg className="absolute w-20 h-20 -rotate-90">
+                  <circle cx="40" cy="40" r="36" fill="transparent" stroke="rgba(34,211,238,0.05)" strokeWidth="1" />
+                  <motion.circle cx="40" cy="40" r="36" fill="transparent" stroke="#22d3ee" strokeWidth="1.5" strokeDasharray={2 * Math.PI * 36} animate={{ strokeDashoffset: (2 * Math.PI * 36) * (1 - sessionProgress) }} strokeLinecap="round" />
+                </svg>
 
-                    {/* Central Core */}
-                    <div className="relative flex items-center justify-center z-10 transition-all duration-300">
-                        <motion.div animate={{ scale: isWarningMode ? [1, 1.4, 1] : [1, 1.1, 1], opacity: [0.1, 0.4, 0.1] }} transition={{ repeat: Infinity, duration: isWarningMode ? 0.5 : 4 }} style={{ backgroundColor: coreColor }} className="absolute w-14 h-14 rounded-full blur-xl"></motion.div>
-                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 10, ease: "linear" }} style={{ borderColor: outerColor, borderStyle: 'dashed' }} className="absolute w-12 h-12 border rounded-full border-opacity-40"></motion.div>
-                        <motion.div animate={{ scale: (pulse || isWarningMode) ? 1.2 : 1 }} style={{ backgroundColor: coreColor }} className="relative w-6 h-6 rounded-full border border-white/20 shadow-inner shadow-black/50"></motion.div>
-                    </div>
-                </div>
+                {/* Glow */}
+                <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 4 }} className="absolute w-12 h-12 bg-cyan-500 rounded-full blur-xl" />
+                {/* Dashed Ring */}
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 10, ease: "linear" }} className="absolute w-10 h-10 border border-dashed border-cyan-400/40 rounded-full" />
+                {/* Core */}
+                <motion.div animate={{ scale: pulse ? 1.2 : 1 }} className="relative w-5 h-5 bg-cyan-500 rounded-full border border-white/20 shadow-inner shadow-black/50" />
+              </div>
             </div>
           </motion.div>
         )}

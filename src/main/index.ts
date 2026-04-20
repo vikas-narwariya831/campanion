@@ -246,7 +246,7 @@ async function trackActivity() {
           // NEW distraction just detected
           isCurrentlyDistracted = true
           distractionWarningRemaining = 5
-          repositionPet('center')
+          // Jarvis stays at top always
           console.log('[JARVIS] >>> DISTRACTION DETECTED! Starting 5-sec warning.')
         }
       } else {
@@ -357,7 +357,6 @@ function startFastTimer() {
         console.log('[JARVIS] >>> PENALTY APPLIED! Session reset.')
         sessionRemainingTime = currentSessionTotal
         isCurrentlyDistracted = false
-        repositionPet('top')
       }
     }
 
