@@ -353,10 +353,13 @@ function startFastTimer() {
       console.log(`[JARVIS] Warning countdown: ${distractionWarningRemaining}`)
 
       if (distractionWarningRemaining <= 0) {
-        // PENALTY: Reset session
-        console.log('[JARVIS] >>> PENALTY APPLIED! Session reset.')
+        // PENALTY: Reset session timer but KEEP distraction state active
+        // The user is STILL on the distracting app, so restart the warning immediately
+        console.log('[JARVIS] >>> PENALTY APPLIED! Session reset. Warning restarting.')
         sessionRemainingTime = currentSessionTotal
-        isCurrentlyDistracted = false
+        // Don't clear isCurrentlyDistracted — user is still distracted!
+        // Restart warning countdown so red alert stays persistent
+        distractionWarningRemaining = 5
       }
     }
 
