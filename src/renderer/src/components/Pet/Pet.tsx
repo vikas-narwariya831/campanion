@@ -100,15 +100,9 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
     setDropdownOpen(false)
   }
 
-  const startSession = (min: number) => {
-    if (window.api?.startSession) window.api.startSession(min)
-  }
-  const stopSession = () => {
-    if (window.api?.stopSession) window.api.stopSession()
-  }
-  const toggleDashboard = () => {
-    if (window.api?.toggleDashboard) window.api.toggleDashboard()
-  }
+  const startSession = (min: number) => { if (window.api?.startSession) window.api.startSession(min) }
+  const stopSession = () => { if (window.api?.stopSession) window.api.stopSession() }
+  const toggleDashboard = () => { if (window.api?.toggleDashboard) window.api.toggleDashboard() }
 
   const initializeJarvis = () => {
       const speech = new SpeechSynthesisUtterance('System active.')
@@ -134,27 +128,29 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
 
   return (
     <div
-      className="w-full h-full flex flex-col items-center justify-center pointer-events-auto select-none"
+      className="w-full h-full flex flex-col items-center justify-start pointer-events-auto select-none"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
+      {/* Notch - Always visible at top */}
+      <div className="w-24 h-4 bg-black/80 rounded-b-2xl mb-1 shadow-lg flex items-center justify-center border-x border-b border-white/5">
+        <div className="w-6 h-0.5 bg-white/10 rounded-full"></div>
+      </div>
+
       <AnimatePresence mode='wait'>
         {isSetupActive ? (
-          /* ==================== SETUP SCREEN ==================== */
+          /* ==================== SETUP ==================== */
           <motion.div 
-            key="setup-screen"
+            key="setup"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="w-[220px] bg-slate-950/95 border border-cyan-500/30 rounded-[1.2rem] p-3 shadow-2xl backdrop-blur-xl flex flex-col items-center z-[9999]"
+            className="w-[220px] bg-slate-950/95 border border-cyan-500/30 rounded-[1.2rem] p-3 shadow-2xl backdrop-blur-xl flex flex-col items-center mt-2 z-[9999]"
           >
             <div className="w-full space-y-2">
                 <div className="space-y-1 relative">
                     <label className="text-[7px] text-slate-500 font-bold uppercase tracking-widest ml-1">Focus Target</label>
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
-                        className="w-full bg-slate-900 border border-slate-700/50 p-1.5 rounded-lg flex items-center justify-between text-[9px] font-bold text-white"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }} className="w-full bg-slate-900 border border-slate-700/50 p-1.5 rounded-lg flex items-center justify-between text-[9px] font-bold text-white">
                         <div className="flex items-center space-x-2">
                             <Target className="w-2.5 h-2.5 text-cyan-400" />
                             <span className="truncate max-w-[100px]">{setupApp}</span>
@@ -164,9 +160,7 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
                     {dropdownOpen && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-700 rounded-lg overflow-y-auto max-h-[120px] z-[9999] shadow-2xl">
                             {runningApps.map(app => (
-                                <button key={app} onClick={() => { setSetupApp(app); setDropdownOpen(false); }} className={`w-full p-1.5 text-left text-[8px] font-bold border-b border-white/5 last:border-0 hover:bg-cyan-500/10 ${setupApp === app ? 'text-cyan-400' : 'text-slate-200'}`}>
-                                    {app}
-                                </button>
+                                <button key={app} onClick={() => { setSetupApp(app); setDropdownOpen(false); }} className={`w-full p-1.5 text-left text-[8px] font-bold border-b border-white/5 last:border-0 hover:bg-cyan-500/10 ${setupApp === app ? 'text-cyan-400' : 'text-slate-200'}`}>{app}</button>
                             ))}
                         </div>
                     )}
@@ -175,102 +169,25 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
                     <label className="text-[7px] text-slate-500 font-bold uppercase tracking-widest ml-1">Duration</label>
                     <div className="grid grid-cols-3 gap-1 bg-slate-900 border border-slate-800 p-0.5 rounded-lg">
                         {[15, 60, 120].map(m => (
-                            <button key={m} onClick={() => setSetupTime(m)} className={`py-1 rounded-md text-[8px] font-black transition-all ${setupTime === m ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}>
-                                {m < 60 ? `${m}M` : `${m/60}H`}
-                            </button>
+                            <button key={m} onClick={() => setSetupTime(m)} className={`py-1 rounded-md text-[8px] font-black transition-all ${setupTime === m ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}>{m < 60 ? `${m}M` : `${m/60}H`}</button>
                         ))}
                     </div>
                 </div>
             </div>
-            <button onClick={initializeJarvis} className="w-full mt-4 bg-cyan-500 p-2 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-                Start Session
-            </button>
-          </motion.div>
-        ) : isWarningMode ? (
-          /* ==================== WARNING MODE (Compact, No Background Bleed) ==================== */
-          <motion.div 
-            key="warning-mode"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
-            className="flex flex-col items-center"
-          >
-            {/* Compact Warning Card */}
-            <div className="relative flex flex-col items-center">
-              {/* Big Red Number */}
-              <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ repeat: Infinity, duration: 0.5 }}
-                className="relative flex items-center justify-center"
-              >
-                {/* Red Glow Behind Number */}
-                <div className="absolute w-48 h-48 bg-red-600/30 rounded-full blur-[40px]" />
-                
-                {/* Red Ring */}
-                <svg className="absolute w-48 h-48 -rotate-90">
-                  <circle cx="96" cy="96" r="88" fill="transparent" stroke="#ff000020" strokeWidth="3" />
-                  <motion.circle 
-                    cx="96" cy="96" r="88" fill="transparent" 
-                    stroke="#ff0000" strokeWidth="4"
-                    strokeDasharray={2 * Math.PI * 88}
-                    animate={{ strokeDashoffset: (2 * Math.PI * 88) * (1 - ((session?.warning || 0) / 5)) }}
-                    strokeLinecap="round"
-                  />
-                </svg>
-
-                {/* Core Red Dot */}
-                <motion.div 
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                  transition={{ repeat: Infinity, duration: 0.4 }}
-                  className="absolute w-8 h-8 bg-red-500 rounded-full blur-md"
-                />
-                <div className="w-5 h-5 bg-red-500 rounded-full border border-white/20 shadow-[0_0_20px_#ff0000] absolute" />
-
-                {/* Countdown Number */}
-                <motion.span 
-                  key={session?.warning}
-                  initial={{ scale: 2, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-[100px] font-black text-white leading-none drop-shadow-[0_0_30px_rgba(255,0,0,0.8)] relative z-10"
-                >
-                  {Math.ceil(session?.warning || 0)}
-                </motion.span>
-              </motion.div>
-
-              {/* Warning Text Below */}
-              <motion.div 
-                animate={{ opacity: [0.6, 1, 0.6] }}
-                transition={{ repeat: Infinity, duration: 0.3 }}
-                className="mt-4 bg-red-600 px-6 py-1.5 rounded-full shadow-[0_0_20px_rgba(255,0,0,0.5)]"
-              >
-                <span className="text-[10px] font-black text-white tracking-[0.5em] uppercase">
-                  {glitchText}
-                </span>
-              </motion.div>
-
-              <span className="text-[9px] text-red-400/60 font-bold mt-3 uppercase tracking-wider">
-                Return to {session?.target || 'Focus App'} now
-              </span>
-            </div>
+            <button onClick={initializeJarvis} className="w-full mt-4 bg-cyan-500 p-2 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-slate-950">Start Session</button>
           </motion.div>
         ) : (
-          /* ==================== NORMAL FOCUS MODE ==================== */
+          /* ==================== ACTIVE SESSION (Reactor always at top) ==================== */
           <motion.div 
-            key="focus-mode"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            className="flex flex-col items-center"
+            key="active"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center mt-2"
           >
-            {/* Notch */}
-            <div className="w-24 h-4 bg-black/80 rounded-b-2xl mb-2 shadow-lg flex items-center justify-center border-x border-b border-white/5">
-              <div className="w-6 h-0.5 bg-white/10 rounded-full"></div>
-            </div>
-
-            {/* Reactor + Timer Assembly */}
+            {/* Reactor + Timer Row */}
             <div className="relative flex items-center justify-center">
               {/* Timer Badge Right */}
-              {session?.isActive && (
+              {session?.isActive && !isWarningMode && (
                 <motion.div 
                   initial={{ opacity: 0, x: -5 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -283,11 +200,11 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
                 </motion.div>
               )}
 
-              {/* Reactor Core */}
+              {/* Reactor Core - Always here at top */}
               <div className="relative w-24 h-24 flex items-center justify-center">
                 {/* Quick Menu */}
                 <AnimatePresence>
-                  {showMenu && (
+                  {showMenu && !isWarningMode && (
                     <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }} className="absolute -top-8 flex items-center space-x-1 bg-slate-950/90 border border-slate-700 p-1 rounded-xl z-[999]">
                       <button onClick={stopSession} className="p-1 text-rose-400 hover:bg-rose-500/10 rounded-md"><Square size={10} fill="currentColor" /></button>
                       <button onClick={toggleDashboard} className="p-1 text-slate-400 hover:text-white"><LayoutDashboard size={10} /></button>
@@ -297,18 +214,65 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
 
                 {/* Circle Progress */}
                 <svg className="absolute w-20 h-20 -rotate-90">
-                  <circle cx="40" cy="40" r="36" fill="transparent" stroke="rgba(34,211,238,0.05)" strokeWidth="1" />
-                  <motion.circle cx="40" cy="40" r="36" fill="transparent" stroke="#22d3ee" strokeWidth="1.5" strokeDasharray={2 * Math.PI * 36} animate={{ strokeDashoffset: (2 * Math.PI * 36) * (1 - sessionProgress) }} strokeLinecap="round" />
+                  <circle cx="40" cy="40" r="36" fill="transparent" stroke={isWarningMode ? 'rgba(255,0,0,0.1)' : 'rgba(34,211,238,0.05)'} strokeWidth="1" />
+                  <motion.circle cx="40" cy="40" r="36" fill="transparent" stroke={outerColor} strokeWidth={isWarningMode ? 3 : 1.5} strokeDasharray={2 * Math.PI * 36} animate={{ strokeDashoffset: (2 * Math.PI * 36) * (1 - sessionProgress) }} strokeLinecap="round" />
                 </svg>
 
                 {/* Glow */}
-                <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 4 }} className="absolute w-12 h-12 bg-cyan-500 rounded-full blur-xl" />
+                <motion.div 
+                  animate={{ scale: isWarningMode ? [1, 1.4, 1] : [1, 1.1, 1], opacity: [0.1, 0.4, 0.1] }} 
+                  transition={{ repeat: Infinity, duration: isWarningMode ? 0.4 : 4 }} 
+                  style={{ backgroundColor: coreColor }}
+                  className="absolute w-12 h-12 rounded-full blur-xl" 
+                />
                 {/* Dashed Ring */}
-                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 10, ease: "linear" }} className="absolute w-10 h-10 border border-dashed border-cyan-400/40 rounded-full" />
-                {/* Core */}
-                <motion.div animate={{ scale: pulse ? 1.2 : 1 }} className="relative w-5 h-5 bg-cyan-500 rounded-full border border-white/20 shadow-inner shadow-black/50" />
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: isWarningMode ? 2 : 10, ease: "linear" }} style={{ borderColor: outerColor }} className="absolute w-10 h-10 border border-dashed rounded-full" />
+                {/* Core Dot */}
+                <motion.div 
+                  animate={{ scale: pulse || isWarningMode ? 1.3 : 1 }} 
+                  style={{ backgroundColor: coreColor }} 
+                  className="relative w-5 h-5 rounded-full border border-white/20 shadow-inner" 
+                />
               </div>
             </div>
+
+            {/* WARNING PANEL - Drops below reactor when distraction detected */}
+            <AnimatePresence>
+              {isWarningMode && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scaleY: 0 }}
+                  animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                  exit={{ opacity: 0, y: -10, scaleY: 0 }}
+                  className="flex flex-col items-center mt-4 origin-top"
+                >
+                  {/* Big Countdown Number */}
+                  <motion.span 
+                    key={session?.warning}
+                    initial={{ scale: 2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="text-[80px] font-black text-red-500 leading-none drop-shadow-[0_0_20px_rgba(255,0,0,0.6)]"
+                  >
+                    {Math.ceil(session?.warning || 0)}
+                  </motion.span>
+
+                  {/* Glitch Text Badge */}
+                  <motion.div 
+                    animate={{ opacity: [0.6, 1, 0.6] }}
+                    transition={{ repeat: Infinity, duration: 0.3 }}
+                    className="bg-red-600 px-5 py-1 rounded-full shadow-[0_0_15px_rgba(255,0,0,0.4)] mt-2"
+                  >
+                    <span className="text-[9px] font-black text-white tracking-[0.4em] uppercase">
+                      {glitchText}
+                    </span>
+                  </motion.div>
+
+                  {/* Return Message */}
+                  <span className="text-[8px] text-red-400/50 font-bold mt-3 uppercase tracking-wider">
+                    Return to {session?.target || 'Focus'} immediately
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
