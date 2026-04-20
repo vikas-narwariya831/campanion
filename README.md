@@ -70,4 +70,4 @@ MIT
 
 ## Author
 
-Your Name
+Vikas Narwariya
