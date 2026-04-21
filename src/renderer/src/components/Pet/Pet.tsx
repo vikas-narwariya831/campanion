@@ -16,6 +16,7 @@ interface PetProps {
     total: number
     isActive: boolean
     warning: number
+    isPenalty?: boolean
     target?: string
   }
 }
@@ -58,6 +59,9 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
 
   useEffect(() => {
     if ((session?.warning || 0) > 0 && session?.isActive) {
+      // Prevent overlapping speech triggers
+      if (window.speechSynthesis.speaking) return
+
       const speak = () => {
         const phrases = ['Sir, return to focus.', 'Distraction detected.', 'Penalty imminent.']
         const phrase = phrases[Math.floor(Math.random() * phrases.length)]
@@ -69,11 +73,16 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
         window.speechSynthesis.speak(speech)
       }
       setTimeout(speak, 300)
+    } else {
+      // Stop speaking immediately when warning is removed or session stopped
+      window.speechSynthesis.cancel()
     }
   }, [session?.warning, session?.isActive])
 
   useEffect(() => {
-    if ((session?.warning || 0) > 0) {
+    if (session?.isPenalty) {
+      setGlitchText('YOU GOAL TIMER RESET')
+    } else if ((session?.warning || 0) > 0) {
       const texts = ['ACCESS DENIED', 'SYSTEM LOCKDOWN', 'ALERT']
       const interval = setInterval(() => {
         setGlitchText(texts[Math.floor(Math.random() * texts.length)])
@@ -82,10 +91,10 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
     } else {
       setGlitchText('SYSTEM SECURE')
     }
-  }, [session?.warning])
+  }, [session?.warning, session?.isPenalty])
 
   const isSetupActive = !session?.isActive
-  const isWarningMode = (session?.warning || 0) > 0
+  const isWarningMode = (session?.warning || 0) > 0 || session?.isPenalty
   
   const handleMouseEnter = () => {
     if (window.api?.setIgnoreMouse) window.api.setIgnoreMouse(false)
@@ -246,14 +255,16 @@ const JarvisCore: React.FC<PetProps> = ({ state, idleTime, scale = 1, session })
                   className="flex flex-col items-center mt-4 origin-top"
                 >
                   {/* Big Countdown Number */}
-                  <motion.span 
-                    key={session?.warning}
-                    initial={{ scale: 2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="text-[80px] font-black text-red-500 leading-none drop-shadow-[0_0_20px_rgba(255,0,0,0.6)]"
-                  >
-                    {Math.ceil(session?.warning || 0)}
-                  </motion.span>
+                  {!session?.isPenalty && (
+                    <motion.span 
+                      key={session?.warning}
+                      initial={{ scale: 2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="text-[80px] font-black text-red-500 leading-none drop-shadow-[0_0_20px_rgba(255,0,0,0.6)]"
+                    >
+                      {Math.ceil(session?.warning || 0)}
+                    </motion.span>
+                  )}
 
                   {/* Glitch Text Badge */}
                   <motion.div 

@@ -15,6 +15,7 @@ let sessionRemainingTime = 0
 let currentSessionTotal = 0
 let distractionWarningRemaining = 0
 let isCurrentlyDistracted = false
+let isPenaltyActive = false
 let lastCategory = 'Uncategorized'
 let lastOwner = 'None'
 let lastPos: 'top' | 'center' = 'top'
@@ -123,6 +124,24 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  // Ensure links open in the system browser, not in the app window
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
+
+  // Prevent accidental navigation to external sites within the Electron window
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    const devUrl = process.env['ELECTRON_RENDERER_URL']
+    if (devUrl && !url.startsWith(devUrl)) {
+      event.preventDefault()
+      shell.openExternal(url)
+    } else if (!devUrl && !url.startsWith('file://')) {
+      event.preventDefault()
+      shell.openExternal(url)
+    }
+  })
 }
 
 function createPetWindow(): void {
@@ -155,6 +174,11 @@ function createPetWindow(): void {
   } else {
     petWindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: 'pet' })
   }
+
+  // Pet window should never open new windows
+  petWindow.webContents.setWindowOpenHandler(() => {
+    return { action: 'deny' }
+  })
 }
 
 // Activity Tracking Logic
@@ -253,9 +277,10 @@ async function trackActivity() {
         if (isCurrentlyDistracted) {
           // User returned to focus
           isCurrentlyDistracted = false
+          isPenaltyActive = false
           distractionWarningRemaining = 0
           repositionPet('top')
-          console.log('[JARVIS] >>> Focus regained! Cancelling warning.')
+          console.log('[JARVIS] >>> Focus regained! Cancelling warning/penalty.')
         }
       }
     }
@@ -320,6 +345,7 @@ function sendPayload(owner: string, category: string, stats: any, targetApp: str
         total: currentSessionTotal,
         isActive: sessionRemainingTime > 0,
         warning: distractionWarningRemaining,
+        isPenalty: isPenaltyActive,
         target: targetApp
       }
     }
@@ -357,6 +383,7 @@ function startFastTimer() {
         // The user is STILL on the distracting app, so restart the warning immediately
         console.log('[JARVIS] >>> PENALTY APPLIED! Session reset. Warning restarting.')
         sessionRemainingTime = currentSessionTotal
+        isPenaltyActive = true
         // Don't clear isCurrentlyDistracted — user is still distracted!
         // Restart warning countdown so red alert stays persistent
         distractionWarningRemaining = 5
@@ -381,6 +408,7 @@ function startFastTimer() {
         total: currentSessionTotal,
         isActive: sessionRemainingTime > 0,
         warning: distractionWarningRemaining,
+        isPenalty: isPenaltyActive,
         target: petConfig?.targetApp || 'Code'
       }
     }
@@ -448,6 +476,7 @@ app.whenReady().then(async () => {
     sessionRemainingTime = 0
     distractionWarningRemaining = 0
     isCurrentlyDistracted = false
+    isPenaltyActive = false
     repositionPet('top')
     trackActivity()
   })
